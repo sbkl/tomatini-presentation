@@ -1,26 +1,7 @@
 "use client";
 import { DashboardContent } from "@/components/dashboard-content";
-import { defineWebNav, WebAppLayout } from "@/components/web-app-layout";
-import {
-  BookOpenIcon,
-  ChartColumnIcon,
-  LayoutDashboardIcon,
-  MessageSquareTextIcon,
-  UserRoundCheckIcon,
-} from "lucide-react";
-
-const primaryNav = defineWebNav([
-  {
-    id: "dashboard",
-    label: "Dashboard",
-    icon: LayoutDashboardIcon,
-    isActive: true,
-  },
-  { id: "modules", label: "Training Modules", icon: BookOpenIcon },
-  { id: "coaching", label: "Coaching", icon: UserRoundCheckIcon },
-  { id: "progress", label: "Progress", icon: ChartColumnIcon },
-  { id: "communication", label: "Announcements", icon: MessageSquareTextIcon },
-] as const);
+import { primaryNav } from "@/components/primary-nav";
+import { WebAppLayout } from "@/components/web-app-layout";
 
 export function DashboardPage() {
   return (

@@ -6,13 +6,10 @@ import {
   BellIcon,
   BookOpenIcon,
   CheckIcon,
-  ChartColumnIcon,
   CreditCardIcon,
   LayoutDashboardIcon,
   LogOutIcon,
-  MessageSquareTextIcon,
   UserIcon,
-  UserRoundCheckIcon,
   ChevronsUpDownIcon,
 } from "lucide-react";
 
@@ -55,10 +52,7 @@ const defaultPrimaryNav = [
     icon: LayoutDashboardIcon,
     isActive: true,
   },
-  { id: "modules", label: "Training Modules", icon: BookOpenIcon },
-  { id: "coaching", label: "Coaching", icon: UserRoundCheckIcon },
-  { id: "progress", label: "Progress", icon: ChartColumnIcon },
-  { id: "communication", label: "Announcements", icon: MessageSquareTextIcon },
+  { id: "menus", label: "Menus", icon: BookOpenIcon },
 ] as const satisfies readonly WebNavItem[];
 
 export function defineWebNav<const TPrimaryNav extends readonly WebNavItem[]>(
@@ -224,10 +218,10 @@ export function WebAppLayout<
           ) : null}
         </div>
       ) : null}
-      <div className="w-full rounded-[12px] overflow-hidden bg-[radial-gradient(circle_at_top,oklch(0.97_0.02_32),transparent_50%),linear-gradient(oklch(0.99_0.004_95),oklch(0.97_0.012_80))] p-4 sm:p-8 lg:p-12">
+      <div className="w-full rounded-[12px] overflow-hidden border border-border/70 bg-[radial-gradient(circle_at_top,oklch(0.97_0.02_32),transparent_50%),linear-gradient(oklch(0.99_0.004_95),oklch(0.97_0.012_80))] p-4 sm:p-8 lg:p-12">
         <div
           className={cn(
-            "relative mx-auto h-[80vh] w-full overflow-hidden border border-border bg-card shadow-[0_30px_90px_-55px_oklch(0.6489_0.1708_28.21)]",
+            "relative mx-auto h-[80vh] w-full overflow-hidden border border-border/70 bg-card shadow-[0_30px_90px_-55px_oklch(0.6489_0.1708_28.21)]",
             className,
           )}
           {...props}

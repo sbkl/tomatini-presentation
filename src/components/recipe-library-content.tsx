@@ -817,7 +817,7 @@ export function RecipeLibraryContent() {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <WebAppPageHeader
-        title="Recipe Library"
+        title="Menus"
         actions={
           <Badge variant="outline" className={outlinedSecondaryBadgeClass}>
             {filteredRecipes.length} Recipes
@@ -1004,7 +1004,7 @@ export function RecipeLibraryContent() {
                     {group.items.length}
                   </Badge>
                 </div>
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                   {group.items.map((recipe) => {
                     const status = recipeStatus(recipe);
                     const menuPrice = recipePriceForRestaurant(

@@ -27,10 +27,20 @@ import { PanelLeftIcon } from "lucide-react"
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
+const SIDEBAR_LOCAL_STORAGE_KEY = "sidebar_state"
+const SIDEBAR_SYNC_EVENT = "sidebar_state_change"
 const SIDEBAR_WIDTH = "16rem"
 const SIDEBAR_WIDTH_MOBILE = "18rem"
 const SIDEBAR_WIDTH_ICON = "3rem"
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
+
+function readStoredSidebarState(fallback: boolean) {
+  if (typeof window === "undefined") return fallback
+  const storedValue = window.localStorage.getItem(SIDEBAR_LOCAL_STORAGE_KEY)
+  if (storedValue === "true") return true
+  if (storedValue === "false") return false
+  return fallback
+}
 
 type SidebarContextProps = {
   state: "expanded" | "collapsed"
@@ -71,7 +81,9 @@ function SidebarProvider({
 
   // This is the internal state of the sidebar.
   // We use openProp and setOpenProp for control from outside the component.
-  const [_open, _setOpen] = React.useState(defaultOpen)
+  const [_open, _setOpen] = React.useState(() =>
+    readStoredSidebarState(defaultOpen)
+  )
   const open = openProp ?? _open
   const setOpen = React.useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {
@@ -84,9 +96,51 @@ function SidebarProvider({
 
       // This sets the cookie to keep the sidebar state.
       document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
+      window.localStorage.setItem(SIDEBAR_LOCAL_STORAGE_KEY, String(openState))
+      window.dispatchEvent(
+        new CustomEvent<boolean>(SIDEBAR_SYNC_EVENT, { detail: openState })
+      )
     },
     [setOpenProp, open]
   )
+
+  React.useEffect(() => {
+    const storedOpen = readStoredSidebarState(defaultOpen)
+    if (setOpenProp) {
+      setOpenProp(storedOpen)
+      return
+    }
+    _setOpen(storedOpen)
+  }, [defaultOpen, setOpenProp])
+
+  React.useEffect(() => {
+    const applyOpenState = (nextOpen: boolean) => {
+      if (setOpenProp) {
+        setOpenProp(nextOpen)
+      } else {
+        _setOpen(nextOpen)
+      }
+    }
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== SIDEBAR_LOCAL_STORAGE_KEY || event.newValue == null) {
+        return
+      }
+      applyOpenState(event.newValue === "true")
+    }
+
+    const handleSidebarSync = (event: Event) => {
+      applyOpenState((event as CustomEvent<boolean>).detail)
+    }
+
+    window.addEventListener("storage", handleStorage)
+    window.addEventListener(SIDEBAR_SYNC_EVENT, handleSidebarSync)
+
+    return () => {
+      window.removeEventListener("storage", handleStorage)
+      window.removeEventListener(SIDEBAR_SYNC_EVENT, handleSidebarSync)
+    }
+  }, [setOpenProp])
 
   // Helper to toggle the sidebar.
   const toggleSidebar = React.useCallback(() => {
