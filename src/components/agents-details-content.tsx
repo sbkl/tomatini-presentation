@@ -912,21 +912,12 @@ export function AgentsDetailsContent() {
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="documents" className="p-3">
-                    <section className="space-y-2 border border-border bg-background p-3">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-sm uppercase tracking-[0.12em]">
-                            Documents
-                          </h3>
-                          <Badge
-                            variant="outline"
-                            className={outlinedSecondaryBadgeClass}
-                          >
-                            {activeProfile.documents.length} files
-                          </Badge>
-                        </div>
-
+                  <TabsContent value="documents" className="h-full">
+                    <div className="h-full bg-background">
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/70 px-3 py-2">
+                        <p className="text-muted-foreground text-xs">
+                          {activeProfile.documents.length} documents
+                        </p>
                         <Button
                           type="button"
                           variant="outline"
@@ -950,45 +941,27 @@ export function AgentsDetailsContent() {
                       </div>
 
                       {activeProfile.documents.length === 0 ? (
-                        <div className="border border-border bg-background p-4 text-xs">
+                        <p className="text-muted-foreground px-3 py-4 text-xs">
                           No documents uploaded for this agent yet.
-                        </div>
+                        </p>
                       ) : (
-                        <div className="space-y-2">
+                        <div className="divide-y divide-border/70">
                           {activeProfile.documents.map((document) => (
                             <article
                               key={document.id}
-                              className="bg-muted/20 flex items-start gap-3 border border-border p-3"
+                              className="flex items-start gap-3 px-3 py-2.5"
                             >
-                              <div className="border-border/70 bg-background flex size-8 shrink-0 items-center justify-center border">
-                                <FileTextIcon className="text-muted-foreground size-4" />
-                              </div>
-                              <div className="min-w-0 flex-1 space-y-1">
+                              <FileTextIcon className="text-muted-foreground mt-0.5 size-4 shrink-0" />
+                              <div className="min-w-0 flex-1">
                                 <p className="truncate text-sm">{document.name}</p>
-                                <div className="flex flex-wrap gap-1">
-                                  <Badge
-                                    variant="outline"
-                                    className={outlinedSecondaryBadgeClass}
-                                  >
-                                    {document.type}
-                                  </Badge>
-                                  <Badge
-                                    variant="outline"
-                                    className={outlinedSecondaryBadgeClass}
-                                  >
-                                    {formatFileSize(document.sizeBytes)}
-                                  </Badge>
-                                  <Badge
-                                    variant="outline"
-                                    className={outlinedSecondaryBadgeClass}
-                                  >
-                                    Updated {document.updatedAt}
-                                  </Badge>
-                                </div>
+                                <p className="text-muted-foreground text-[11px]">
+                                  {document.type} · {formatFileSize(document.sizeBytes)} ·{" "}
+                                  {document.updatedAt}
+                                </p>
                               </div>
                               <Button
                                 type="button"
-                                variant="outline"
+                                variant="ghost"
                                 size="icon-xs"
                                 aria-label={`Remove ${document.name}`}
                                 onClick={() =>
@@ -1006,7 +979,7 @@ export function AgentsDetailsContent() {
                           ))}
                         </div>
                       )}
-                    </section>
+                    </div>
                   </TabsContent>
                 </div>
               </ScrollArea>
