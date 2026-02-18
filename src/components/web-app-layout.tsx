@@ -229,6 +229,7 @@ export function WebAppLayout<
           <SidebarProvider defaultOpen={false} className="h-[70vh] min-h-0">
             <Sidebar
               collapsible="icon"
+              mobileBehavior="contained"
               className="absolute inset-y-0! left-0! h-full! border-r border-border/70"
             >
             <SidebarHeader className="p-2">

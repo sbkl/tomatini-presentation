@@ -207,6 +207,7 @@ function Sidebar({
   side = "left",
   variant = "sidebar",
   collapsible = "offcanvas",
+  mobileBehavior = "sheet",
   className,
   children,
   dir,
@@ -215,6 +216,7 @@ function Sidebar({
   side?: "left" | "right"
   variant?: "sidebar" | "floating" | "inset"
   collapsible?: "offcanvas" | "icon" | "none"
+  mobileBehavior?: "sheet" | "contained"
 }) {
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
 
@@ -233,7 +235,7 @@ function Sidebar({
     )
   }
 
-  if (isMobile) {
+  if (isMobile && mobileBehavior === "sheet") {
     return (
       <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
         <SheetContent
@@ -256,6 +258,67 @@ function Sidebar({
           <div className="flex h-full w-full flex-col">{children}</div>
         </SheetContent>
       </Sheet>
+    )
+  }
+
+  if (isMobile) {
+    const mobileState = openMobile ? "expanded" : "collapsed"
+
+    return (
+      <div
+        className={cn(
+          "absolute inset-0 z-40 md:hidden",
+          openMobile ? "pointer-events-auto" : "pointer-events-none"
+        )}
+        data-state={mobileState}
+        data-collapsible={openMobile ? "" : collapsible}
+        data-variant={variant}
+        data-side={side}
+        data-slot="sidebar"
+      >
+        <button
+          type="button"
+          aria-label="Close sidebar"
+          className={cn(
+            "absolute inset-0 bg-black/10 transition-opacity duration-200",
+            openMobile ? "opacity-100" : "opacity-0"
+          )}
+          onClick={() => setOpenMobile(false)}
+        />
+        <div
+          dir={dir}
+          data-slot="sidebar-container"
+          data-side={side}
+          className={cn(
+            "absolute inset-y-0 z-10 flex h-full w-(--sidebar-width) transition-transform duration-200 ease-linear",
+            side === "left"
+              ? openMobile
+                ? "left-0 translate-x-0"
+                : "left-0 -translate-x-full"
+              : openMobile
+                ? "right-0 translate-x-0"
+                : "right-0 translate-x-full",
+            variant === "floating" || variant === "inset"
+              ? "p-2"
+              : "group-data-[side=left]:border-r group-data-[side=right]:border-l",
+            className
+          )}
+          style={
+            {
+              "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
+            } as React.CSSProperties
+          }
+          {...props}
+        >
+          <div
+            data-sidebar="sidebar"
+            data-slot="sidebar-inner"
+            className="bg-sidebar text-sidebar-foreground group-data-[variant=floating]:ring-sidebar-border group-data-[variant=floating]:rounded-none group-data-[variant=floating]:shadow-sm group-data-[variant=floating]:ring-1 flex size-full flex-col"
+          >
+            {children}
+          </div>
+        </div>
+      </div>
     )
   }
 

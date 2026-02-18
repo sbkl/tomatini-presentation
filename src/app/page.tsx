@@ -2,6 +2,7 @@ import { DashboardPage } from "@/components/dashboard-page";
 import { Logo } from "@/components/logo";
 import { RecipeCreationPage } from "@/components/recipe-creation-page";
 import { RecipeLibraryPage } from "@/components/recipe-library-page";
+import { TrainingModulesPage } from "@/components/training-modules-page";
 
 export default function Home() {
   return (
@@ -22,6 +23,7 @@ export default function Home() {
       <DashboardPage />
       <RecipeLibraryPage />
       <RecipeCreationPage />
+      <TrainingModulesPage />
     </div>
   );
 }
