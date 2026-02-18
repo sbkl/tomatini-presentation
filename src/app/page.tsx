@@ -1,7 +1,9 @@
+import { AgentsDetailsPage } from "@/components/agents-details-page";
 import { DashboardPage } from "@/components/dashboard-page";
 import { Logo } from "@/components/logo";
 import { RecipeCreationPage } from "@/components/recipe-creation-page";
 import { RecipeLibraryPage } from "@/components/recipe-library-page";
+import { TeamsPage } from "@/components/teams-page";
 import { TrainingModuleDetailsPage } from "@/components/training-module-details-page";
 import { TrainingModulesPage } from "@/components/training-modules-page";
 
@@ -26,6 +28,8 @@ export default function Home() {
       <RecipeCreationPage />
       <TrainingModulesPage />
       <TrainingModuleDetailsPage />
+      <TeamsPage />
+      <AgentsDetailsPage />
     </div>
   );
 }
