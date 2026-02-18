@@ -1,4 +1,5 @@
 import {
+  BotIcon,
   BookOpenIcon,
   GraduationCapIcon,
   LayoutDashboardIcon,
@@ -28,5 +29,10 @@ export const primaryNav = defineWebNav([
     id: "teams",
     label: "Teams",
     icon: UsersIcon,
+  },
+  {
+    id: "agents",
+    label: "Agents",
+    icon: BotIcon,
   },
 ] as const);

@@ -481,7 +481,7 @@ export function RecipeCreationContent() {
         title="New Recipe"
         actions={
           <Button
-            variant="outline"
+            variant="ghost"
             size="icon-sm"
             aria-label={isChatOpen ? "Hide chat" : "Show chat"}
             title={isChatOpen ? "Hide chat" : "Show chat"}
