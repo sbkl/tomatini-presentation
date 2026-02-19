@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { AgentsDrivenPage } from "@/components/agents-driven-page";
 import { AgentsDetailsPage } from "@/components/agents-details-page";
 import { DashboardPage } from "@/components/dashboard-page";
 import { DevelopmentPlanPage } from "@/components/development-plan-page";
@@ -12,6 +13,7 @@ import { MobileTeamPage } from "@/components/mobile-team-page";
 import { MobileTrainingModuleDetailsPage } from "@/components/mobile-training-module-details-page";
 import { MobileTrainingModulesPage } from "@/components/mobile-training-modules-page";
 import { PresentationIntroSection } from "@/components/presentation-intro-section";
+import { QuotePage } from "@/components/quote-page";
 import { RecipeCreationPage } from "@/components/recipe-creation-page";
 import { RecipeLibraryPage } from "@/components/recipe-library-page";
 import { TeamsPage } from "@/components/teams-page";
@@ -193,17 +195,31 @@ export const mobileScreens = [
   },
   {
     platform: "mobile",
-    screenId: "factorial-integration",
-    label: "Screen 08: Factorial Integration",
+    screenId: "agents-driven",
+    label: "Screen 08: Agents Driven",
     order: 8,
+    render: () => <AgentsDrivenPage />,
+  },
+  {
+    platform: "mobile",
+    screenId: "factorial-integration",
+    label: "Screen 09: Factorial Integration",
+    order: 9,
     render: () => <FactorialIntegrationPage />,
   },
   {
     platform: "mobile",
     screenId: "development-plan",
     label: "Section: Development Plan",
-    order: 9,
+    order: 10,
     render: () => <DevelopmentPlanPage />,
+  },
+  {
+    platform: "mobile",
+    screenId: "quote",
+    label: "Section: Quote",
+    order: 11,
+    render: () => <QuotePage />,
   },
 ] as const satisfies readonly PresentationScreen[];
 

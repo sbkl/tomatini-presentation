@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowDownIcon,
   ArrowUpIcon,
+  BotIcon,
   CalendarIcon,
   ChevronDownIcon,
   ChevronRightIcon,
@@ -47,6 +48,10 @@ const NAV_POPOVER_MAX_HEIGHT = 576;
 const NAV_POPOVER_VIEWPORT_GUTTER = 96;
 const SECTION_SCROLL_TOP_OFFSET = 55;
 const PLATFORM_CONCEPT_ID = "presentation-platform-concept";
+const AGENTS_DRIVEN_SECTION_ID = toPresentationSectionId(
+  "mobile",
+  "agents-driven",
+);
 const FACTORIAL_INTEGRATION_SECTION_ID = toPresentationSectionId(
   "mobile",
   "factorial-integration",
@@ -55,6 +60,7 @@ const DEVELOPMENT_PLAN_SECTION_ID = toPresentationSectionId(
   "mobile",
   "development-plan",
 );
+const QUOTE_SECTION_ID = toPresentationSectionId("mobile", "quote");
 
 type PresentationSection = PresentationScreen & {
   sectionId: string;
@@ -422,8 +428,18 @@ export function PresentationShell({
     setIsNavOpen(false);
   }, [navigateToSection]);
 
+  const navigateToAgentsDriven = useCallback(() => {
+    void navigateToSection(AGENTS_DRIVEN_SECTION_ID);
+    setIsNavOpen(false);
+  }, [navigateToSection]);
+
   const navigateToDevelopmentPlan = useCallback(() => {
     void navigateToSection(DEVELOPMENT_PLAN_SECTION_ID);
+    setIsNavOpen(false);
+  }, [navigateToSection]);
+
+  const navigateToQuote = useCallback(() => {
+    void navigateToSection(QUOTE_SECTION_ID);
     setIsNavOpen(false);
   }, [navigateToSection]);
 
@@ -788,9 +804,11 @@ export function PresentationShell({
                           ? webSections
                           : mobileSections.filter(
                               (screen) =>
+                                screen.sectionId !== AGENTS_DRIVEN_SECTION_ID &&
                                 screen.sectionId !==
                                   FACTORIAL_INTEGRATION_SECTION_ID &&
-                                screen.sectionId !== DEVELOPMENT_PLAN_SECTION_ID,
+                                screen.sectionId !== DEVELOPMENT_PLAN_SECTION_ID &&
+                                screen.sectionId !== QUOTE_SECTION_ID,
                             );
                       const isExpanded = expandedGroups[platform];
                       const isPlatformActive = activePlatform === platform;
@@ -874,6 +892,19 @@ export function PresentationShell({
                     })}
                     <button
                       type="button"
+                      onClick={navigateToAgentsDriven}
+                      className={cn(
+                        "flex w-full items-center gap-2 border border-border/60 bg-background/30 px-2.5 py-2 text-left text-[13px] transition-colors",
+                        activeSectionId === AGENTS_DRIVEN_SECTION_ID
+                          ? "bg-muted text-foreground"
+                          : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+                      )}
+                    >
+                      <BotIcon className="size-3.5" />
+                      Agents Driven
+                    </button>
+                    <button
+                      type="button"
                       onClick={navigateToFactorialIntegration}
                       className={cn(
                         "flex w-full items-center gap-2 border border-border/60 bg-background/30 px-2.5 py-2 text-left text-[13px] transition-colors",
@@ -897,6 +928,19 @@ export function PresentationShell({
                     >
                       <CalendarIcon className="size-3.5" />
                       Development Plan
+                    </button>
+                    <button
+                      type="button"
+                      onClick={navigateToQuote}
+                      className={cn(
+                        "flex w-full items-center gap-2 border border-border/60 bg-background/30 px-2.5 py-2 text-left text-[13px] transition-colors",
+                        activeSectionId === QUOTE_SECTION_ID
+                          ? "bg-muted text-foreground"
+                          : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+                      )}
+                    >
+                      <FileTextIcon className="size-3.5" />
+                      Quote
                     </button>
                   </div>
                 </div>
