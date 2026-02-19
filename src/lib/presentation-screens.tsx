@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 import { AgentsDetailsPage } from "@/components/agents-details-page";
 import { DashboardPage } from "@/components/dashboard-page";
+import { DevelopmentPlanPage } from "@/components/development-plan-page";
 import { FactorialIntegrationPage } from "@/components/factorial-integration-page";
 import { MobileChatPage } from "@/components/mobile-chat-page";
 import { MobileDashboardPage } from "@/components/mobile-dashboard-page";
@@ -196,6 +197,13 @@ export const mobileScreens = [
     label: "Screen 08: Factorial Integration",
     order: 8,
     render: () => <FactorialIntegrationPage />,
+  },
+  {
+    platform: "mobile",
+    screenId: "development-plan",
+    label: "Section: Development Plan",
+    order: 9,
+    render: () => <DevelopmentPlanPage />,
   },
 ] as const satisfies readonly PresentationScreen[];
 
