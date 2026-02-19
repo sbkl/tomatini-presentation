@@ -14,7 +14,7 @@ export function TrainingModulesPage() {
       sectionBullets={[
         "Catalog of all core LPM learning categories with Level 1 and Level 2 progression.",
         "Search and filters mirror the Menus screen for fast module slicing.",
-        "Cards summarize audience, status, duration, and training delivery formats.",
+        "Cards summarize audience, status, duration, delivery format, and FSRS retention strategy readiness.",
       ]}
     >
       <TrainingModulesContent />

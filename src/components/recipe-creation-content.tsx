@@ -28,6 +28,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { WebAppPageHeader } from "@/components/web-app-page-header";
+import { saladeNicoiseRecipe } from "@/lib/salade-nicoise-recipe";
 import { cn } from "@/lib/utils";
 
 type RecipeDraft = {
@@ -134,32 +135,16 @@ const restaurantComboboxItems = [
 ];
 
 const baseDraft: RecipeDraft = {
-  title: "Salade Nicoise",
-  description:
-    "Classic Mediterranean starter with tuna, vegetables, and bright dressing.",
-  dishAnnouncement:
-    "Salade Nicoise with tuna, confit vegetables, and citrus caper dressing.",
-  ingredients: [
-    "Yellowfin tuna",
-    "Baby gem lettuce",
-    "Cherry tomato",
-    "Green beans",
-    "Olives",
-    "Quail egg",
-  ],
-  dressing: ["Lemon juice", "Olive oil", "Dijon mustard", "Capers"],
-  garnish: ["Chives", "Black olive dust"],
-  allergens: ["Fish", "Mustard", "Egg"],
-  preparationSteps: [
-    "Marinate tuna lightly with olive oil, sea salt, and lemon zest.",
-    "Arrange vegetables and lettuce in a chilled shallow bowl.",
-    "Place sliced tuna on top and finish with dressing and garnish.",
-  ],
-  serviceTools: ["Big fork", "Big spoon"],
-  chefNotes: [
-    "Keep tuna cold until final plating.",
-    "Dressing should be served fresh and emulsified.",
-  ],
+  title: saladeNicoiseRecipe.title,
+  description: saladeNicoiseRecipe.description,
+  dishAnnouncement: saladeNicoiseRecipe.dishAnnouncement,
+  ingredients: [...saladeNicoiseRecipe.ingredients],
+  dressing: [...saladeNicoiseRecipe.dressing],
+  garnish: [...saladeNicoiseRecipe.garnish],
+  allergens: [...saladeNicoiseRecipe.allergens],
+  preparationSteps: [...saladeNicoiseRecipe.preparationSteps],
+  serviceTools: [...saladeNicoiseRecipe.serviceTools],
+  chefNotes: [...saladeNicoiseRecipe.chefNotes],
 };
 
 const ingredientLexicon = [
@@ -403,8 +388,7 @@ export function RecipeCreationContent() {
   const [isChatOpen, setIsChatOpen] = useState(true);
   const [restaurantQuery, setRestaurantQuery] = useState("");
   const [assignedRestaurants, setAssignedRestaurants] = useState<string[]>([
-    "London",
-    "Dubai",
+    ...saladeNicoiseRecipe.restaurants,
   ]);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
   const restaurantsAnchorRef = useComboboxAnchor();
@@ -591,7 +575,7 @@ export function RecipeCreationContent() {
               {showRecipeImage ? (
                 <div className="px-3">
                   <Image
-                    src="/salade-nicoise.png"
+                    src={`/${saladeNicoiseRecipe.imageFile}`}
                     alt="Salade Nicoise example plating"
                     width={1320}
                     height={770}

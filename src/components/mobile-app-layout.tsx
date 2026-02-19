@@ -1,6 +1,13 @@
 "use client";
 
-import { useState, type ComponentProps, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useMemo,
+  useState,
+  type ComponentProps,
+  type ReactNode,
+} from "react";
 import {
   BatteryFullIcon,
   BellIcon,
@@ -26,6 +33,24 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
 export { defineMobileNav, type MobileNavItem } from "@/components/mobile-nav";
+
+type MobileFixedFooterContextValue = {
+  setFixedFooter: (footer: ReactNode | null) => void;
+};
+
+const MobileFixedFooterContext =
+  createContext<MobileFixedFooterContextValue | null>(null);
+
+export function useMobileFixedFooter() {
+  const context = useContext(MobileFixedFooterContext);
+  if (!context) {
+    return {
+      setFixedFooter: () => {},
+    } satisfies MobileFixedFooterContextValue;
+  }
+
+  return context;
+}
 
 const defaultPrimaryNav = [
   {
@@ -55,6 +80,12 @@ export interface MobileAppLayoutProps<
   sectionBullets?: readonly string[];
   primaryNav?: PrimaryNavItems;
   activeNavItemId?: PrimaryNavItems[number]["id"];
+  headerTitle?: string;
+  headerLeading?: ReactNode;
+  headerTrailing?: ReactNode | null;
+  showBottomNav?: boolean;
+  fixedFooterBare?: boolean;
+  floatingLayer?: ReactNode;
   user?: MobileUser;
   children: ReactNode;
 }
@@ -67,6 +98,12 @@ export function MobileAppLayout<
   sectionBullets,
   primaryNav = defaultPrimaryNav as unknown as PrimaryNavItems,
   activeNavItemId,
+  headerTitle,
+  headerLeading,
+  headerTrailing,
+  showBottomNav = true,
+  fixedFooterBare = false,
+  floatingLayer,
   user = defaultMobileUser,
   children,
   className,
@@ -79,11 +116,19 @@ export function MobileAppLayout<
   const [uncontrolledActiveNavId, setUncontrolledActiveNavId] = useState<
     string | undefined
   >(defaultActiveNavId);
+  const [fixedFooter, setFixedFooter] = useState<ReactNode | null>(null);
+  const fixedFooterContextValue = useMemo(
+    () => ({ setFixedFooter }),
+    [setFixedFooter],
+  );
 
   const resolvedActiveNavId = activeNavItemId ?? uncontrolledActiveNavId;
   const activeNavItem =
     resolvedPrimaryNav.find((item) => item.id === resolvedActiveNavId) ??
     resolvedPrimaryNav[0];
+  const resolvedHeaderTitle = headerTitle ?? activeNavItem?.label ?? "App";
+  const resolvedHeaderTrailing =
+    headerTrailing === null ? null : headerTrailing ?? <MobileHeaderUserMenu user={user} />;
 
   return (
     <section className="mx-auto w-full max-w-7xl space-y-4">
@@ -104,78 +149,122 @@ export function MobileAppLayout<
           className={cn("mx-auto w-full max-w-[430px]", className)}
           {...props}
         >
-          <PhoneFrame>
-            <div className="relative flex h-full min-h-0 flex-col overflow-hidden rounded-[2.4rem] border border-border/70 bg-card">
-              <div className="pointer-events-none absolute left-1/2 top-2 z-30 h-7 w-36 -translate-x-1/2 rounded-full border border-black/70 bg-black shadow-[inset_0_1px_1px_rgba(255,255,255,0.12)]" />
+          <MobileFixedFooterContext.Provider value={fixedFooterContextValue}>
+            <PhoneFrame>
+              <div className="relative flex h-full min-h-0 flex-col overflow-hidden rounded-[2.4rem] border border-border/70 bg-card">
+                <div className="pointer-events-none absolute left-1/2 top-2 z-30 h-7 w-36 -translate-x-1/2 rounded-full border border-black/70 bg-black shadow-[inset_0_1px_1px_rgba(255,255,255,0.12)]" />
 
-              <div className="relative z-10 flex h-full min-h-0 flex-col">
-                <div className="relative min-h-0 flex-1">
-                  <div className="absolute inset-x-0 top-0 z-30 overflow-hidden rounded-t-[2.4rem] bg-background/75 supports-backdrop-filter:bg-background/35 supports-backdrop-filter:backdrop-blur-xl [backdrop-filter:blur(20px)_saturate(180%)] [-webkit-backdrop-filter:blur(20px)_saturate(180%)] mask-[linear-gradient(to_bottom,black_0%,black_88%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,black_0%,black_88%,transparent_100%)]">
-                    <MobileStatusBar />
-                    <header className="relative flex h-12 items-center justify-center px-4">
-                      <h3 className="text-center text-sm">
-                        {activeNavItem?.label ?? "App"}
-                      </h3>
-                      <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                        <MobileHeaderUserMenu user={user} />
-                      </div>
-                    </header>
-                  </div>
-
-                  <ScrollArea className="h-full min-h-0 bg-muted/20">
-                    <div className="px-3 pb-36 pt-24">{children}</div>
-                  </ScrollArea>
-                </div>
-
-                <nav className="absolute inset-x-0 bottom-0 z-20 px-2 pb-2 pt-1.5">
-                  <div className="flex w-full items-end justify-between gap-2">
-                    <div className="flex max-w-full items-center gap-1 rounded-full border border-border/50 bg-background/80 px-1.5 py-1 shadow-[0_10px_24px_-18px_rgba(0,0,0,0.55)] supports-backdrop-filter:bg-background/10 supports-backdrop-filter:backdrop-blur-2xl [backdrop-filter:blur(24px)_saturate(170%)] [-webkit-backdrop-filter:blur(24px)_saturate(170%)]">
-                      {resolvedPrimaryNav.map(({ id, label, icon: Icon }) => {
-                        const isActive = id === resolvedActiveNavId;
-
-                        return (
-                          <button
-                            key={id}
-                            type="button"
-                            onClick={() => {
-                              if (activeNavItemId === undefined) {
-                                setUncontrolledActiveNavId(id);
-                              }
-                            }}
-                            aria-label={label}
-                            aria-current={isActive ? "page" : undefined}
-                            className={cn(
-                              "flex h-[52px] w-[56px] flex-none flex-col items-center justify-center gap-0.5 rounded-full text-[11px] leading-none transition-all",
-                              isActive
-                                ? "w-[76px] bg-muted text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.28)]"
-                                : "text-secondary/90 hover:text-foreground",
-                            )}
-                          >
-                            <Icon
-                              className={cn(
-                                "size-5",
-                                isActive ? "text-primary" : "text-inherit",
-                              )}
-                            />
-                            <span className="truncate">{label}</span>
-                          </button>
-                        );
-                      })}
+                <div className="relative z-10 flex h-full min-h-0 flex-col">
+                  <div className="relative flex min-h-0 flex-1 flex-col">
+                    <div className="absolute inset-x-0 top-0 z-30 overflow-hidden rounded-t-[2.4rem] bg-background/75 supports-backdrop-filter:bg-background/35 supports-backdrop-filter:backdrop-blur-xl [backdrop-filter:blur(20px)_saturate(180%)] [-webkit-backdrop-filter:blur(20px)_saturate(180%)] mask-[linear-gradient(to_bottom,black_0%,black_88%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,black_0%,black_88%,transparent_100%)]">
+                      <MobileStatusBar />
+                      <header className="relative flex h-12 items-center justify-center px-4">
+                        {headerLeading ? (
+                          <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                            {headerLeading}
+                          </div>
+                        ) : null}
+                        <h3 className="text-center text-sm">{resolvedHeaderTitle}</h3>
+                        {resolvedHeaderTrailing ? (
+                          <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                            {resolvedHeaderTrailing}
+                          </div>
+                        ) : null}
+                      </header>
                     </div>
 
-                    <button
-                      type="button"
-                      aria-label="Open chat"
-                      className="flex h-[60px] w-[60px] shrink-0 flex-none items-center justify-center rounded-full border border-border/50 bg-background/80 text-secondary/90 shadow-[0_10px_24px_-18px_rgba(0,0,0,0.55)] transition-colors hover:text-foreground supports-backdrop-filter:bg-background/10 supports-backdrop-filter:backdrop-blur-2xl [backdrop-filter:blur(24px)_saturate(170%)] [-webkit-backdrop-filter:blur(24px)_saturate(170%)]"
-                    >
-                      <MessageCircleIcon className="size-[26px]" />
-                    </button>
+                    <ScrollArea className="min-h-0 flex-1 bg-muted/20">
+                      <div
+                        className={cn(
+                          "px-3 pt-24",
+                          showBottomNav
+                            ? "pb-36"
+                            : fixedFooterBare
+                              ? "pb-52"
+                              : "pb-6",
+                        )}
+                      >
+                        {children}
+                      </div>
+                    </ScrollArea>
+
+                    {floatingLayer ? (
+                      <div className="pointer-events-none absolute inset-0 z-30">
+                        {floatingLayer}
+                      </div>
+                    ) : null}
+
+                    {!showBottomNav && fixedFooter ? (
+                      <div
+                        className={cn(
+                          "z-20 px-3 pb-2",
+                          fixedFooterBare
+                            ? "pointer-events-none absolute inset-x-0 bottom-0"
+                            : "",
+                        )}
+                      >
+                        {fixedFooterBare ? fixedFooter : (
+                          <div className="border border-border/70 bg-background/94 p-2 supports-backdrop-filter:bg-background/80 supports-backdrop-filter:backdrop-blur-xl">
+                            {fixedFooter}
+                          </div>
+                        )}
+                        <div className="pointer-events-none mx-auto mt-2 h-1 w-24 rounded-full bg-foreground/28" />
+                      </div>
+                    ) : null}
                   </div>
-                  <div className="pointer-events-none mx-auto mt-2 h-1 w-24 rounded-full bg-foreground/28" />
-                </nav>
+
+                  {showBottomNav ? (
+                    <nav className="absolute inset-x-0 bottom-0 z-20 px-2 pb-2 pt-1.5">
+                      <div className="flex w-full items-end justify-between gap-2">
+                        <div className="flex max-w-full items-center gap-1 rounded-full border border-border/50 bg-background/80 px-1.5 py-1 shadow-[0_10px_24px_-18px_rgba(0,0,0,0.55)] supports-backdrop-filter:bg-background/10 supports-backdrop-filter:backdrop-blur-2xl [backdrop-filter:blur(24px)_saturate(170%)] [-webkit-backdrop-filter:blur(24px)_saturate(170%)]">
+                          {resolvedPrimaryNav.map(({ id, label, icon: Icon }) => {
+                            const isActive = id === resolvedActiveNavId;
+
+                            return (
+                              <button
+                                key={id}
+                                type="button"
+                                onClick={() => {
+                                  if (activeNavItemId === undefined) {
+                                    setUncontrolledActiveNavId(id);
+                                  }
+                                }}
+                                aria-label={label}
+                                aria-current={isActive ? "page" : undefined}
+                                className={cn(
+                                  "flex h-[52px] w-[56px] flex-none flex-col items-center justify-center gap-0.5 rounded-full text-[11px] leading-none transition-all",
+                                  isActive
+                                    ? "w-[76px] bg-muted text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.28)]"
+                                    : "text-secondary/90 hover:text-foreground",
+                                )}
+                              >
+                                <Icon
+                                  className={cn(
+                                    "size-5",
+                                    isActive ? "text-primary" : "text-inherit",
+                                  )}
+                                />
+                                <span className="truncate">{label}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        <button
+                          type="button"
+                          aria-label="Open chat"
+                          className="flex h-[60px] w-[60px] shrink-0 flex-none items-center justify-center rounded-full border border-border/50 bg-background/80 text-secondary/90 shadow-[0_10px_24px_-18px_rgba(0,0,0,0.55)] transition-colors hover:text-foreground supports-backdrop-filter:bg-background/10 supports-backdrop-filter:backdrop-blur-2xl [backdrop-filter:blur(24px)_saturate(170%)] [-webkit-backdrop-filter:blur(24px)_saturate(170%)]"
+                        >
+                          <MessageCircleIcon className="size-[26px]" />
+                        </button>
+                      </div>
+                      <div className="pointer-events-none mx-auto mt-2 h-1 w-24 rounded-full bg-foreground/28" />
+                    </nav>
+                  ) : null}
+                </div>
               </div>
-            </div>
-          </PhoneFrame>
+            </PhoneFrame>
+          </MobileFixedFooterContext.Provider>
         </div>
       </div>
     </section>

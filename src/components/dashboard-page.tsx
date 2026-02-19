@@ -12,8 +12,8 @@ export function DashboardPage() {
       sectionTitle="Screen 01: Training Performance Dashboard"
       sectionBullets={[
         "Web admin view for training managers and restaurant GMs.",
-        "Highlights completion, correctness, and learner activity signals.",
-        "Supports fast follow-up with module insights and action queue.",
+        "Highlights completion, correctness, learner activity, and retention health signals.",
+        "Supports fast follow-up with module insights, FSRS review queues, and action planning.",
       ]}
     >
       <DashboardContent />

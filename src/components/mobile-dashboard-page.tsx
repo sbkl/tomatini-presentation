@@ -9,15 +9,19 @@ export function MobileDashboardPage() {
     <MobileAppLayout
       primaryNav={mobilePrimaryNav}
       activeNavItemId="dashboard"
+      user={{
+        name: "Nora Trainee",
+        email: "nora.trainee@lpm.team",
+        initials: "NT",
+      }}
       sectionTitle="Screen 01: Mobile Training Dashboard"
       sectionBullets={[
-        "Native-app style mobile preview for learner-facing experiences.",
-        "Realistic iPhone frame with fixed native chrome and persistent bottom tabs.",
-        "Scrollable in-screen content area that can host future interactive mobile screens.",
+        "Learner-facing dashboard focused on personal progress, FSRS due reviews, and next training steps.",
+        "Uses the established mobile shell with fixed native chrome and bottom tab navigation.",
+        "KPIs and actions are trainee-specific and focused on protecting future knowledge retention.",
       ]}
     >
       <MobileDashboardContent />
     </MobileAppLayout>
   );
 }
-

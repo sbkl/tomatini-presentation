@@ -6,6 +6,7 @@ import {
   ArrowUpIcon,
   ChevronDownIcon,
   ChevronRightIcon,
+  FileTextIcon,
   ListIcon,
   MonitorIcon,
   SmartphoneIcon,
@@ -22,6 +23,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import {
   LAST_VISITED_STORAGE_KEY,
@@ -37,7 +39,9 @@ import type {
 
 const SCROLL_SYNC_UNLOCK_MS = 220;
 const NAV_POPOVER_MAX_HEIGHT = 576;
+const NAV_POPOVER_VIEWPORT_GUTTER = 96;
 const SECTION_SCROLL_TOP_OFFSET = 55;
+const PLATFORM_CONCEPT_ID = "presentation-platform-concept";
 
 type PresentationSection = PresentationScreen & {
   sectionId: string;
@@ -265,7 +269,7 @@ export function PresentationShell({
         : -1;
     }
 
-    const anchor = Math.min(180, window.innerHeight * 0.22);
+    const anchorY = window.scrollY + SECTION_SCROLL_TOP_OFFSET + 1;
     let activeIndex = -1;
     let hasMeasuredSection = false;
 
@@ -276,9 +280,9 @@ export function PresentationShell({
       }
       hasMeasuredSection = true;
 
-      const top = element.getBoundingClientRect().top;
-      // Use an anchor-line crossing model for stable upward/downward transitions.
-      if (top <= anchor + 1) {
+      const absoluteTop = window.scrollY + element.getBoundingClientRect().top;
+      // Deterministic section tracking based on document position.
+      if (absoluteTop <= anchorY) {
         activeIndex = index;
       }
     });
@@ -321,6 +325,40 @@ export function PresentationShell({
     },
     [getViewportSectionIndex, navigateToSection, sections],
   );
+
+  const navigateToConcept = useCallback(() => {
+    const behavior = getPreferredScrollBehavior();
+    const target = document.getElementById(PLATFORM_CONCEPT_ID);
+    const nextTop =
+      target === null
+        ? 0
+        : window.scrollY +
+          target.getBoundingClientRect().top -
+          SECTION_SCROLL_TOP_OFFSET;
+
+    isProgrammaticScrollRef.current = true;
+    window.scrollTo({
+      top: Math.max(0, nextTop),
+      behavior,
+    });
+
+    const nextUrl = `${window.location.pathname}${window.location.search}`;
+    if (window.location.hash) {
+      window.history.replaceState(null, "", nextUrl);
+    }
+
+    if (unlockTimerRef.current !== null) {
+      window.clearTimeout(unlockTimerRef.current);
+    }
+    unlockTimerRef.current = window.setTimeout(
+      () => {
+        isProgrammaticScrollRef.current = false;
+      },
+      behavior === "smooth" ? SCROLL_SYNC_UNLOCK_MS : 40,
+    );
+
+    setIsNavOpen(false);
+  }, []);
 
   const syncActiveSectionById = useCallback(
     (candidateId: string) => {
@@ -542,6 +580,7 @@ export function PresentationShell({
     navContentHeight === null
       ? undefined
       : Math.min(navContentHeight, NAV_POPOVER_MAX_HEIGHT);
+  const maxPopoverHeightStyle = `min(${NAV_POPOVER_MAX_HEIGHT}px, calc(100vh - ${NAV_POPOVER_VIEWPORT_GUTTER}px))`;
   const hasScrollableNavContent =
     navContentHeight !== null && navContentHeight > NAV_POPOVER_MAX_HEIGHT;
 
@@ -597,156 +636,180 @@ export function PresentationShell({
               sideOffset={10}
               positionMethod="fixed"
               disableAnchorTracking
-              className="nav-popover-container pointer-events-auto w-[340px] gap-0 overflow-hidden rounded-xl border-border/60 bg-background/92 p-4 supports-backdrop-filter:bg-background/78 supports-backdrop-filter:backdrop-blur-md"
+              className="nav-popover-container pointer-events-auto w-[340px] gap-0 overflow-hidden rounded-xl border-border/60 bg-background/92 p-0 supports-backdrop-filter:bg-background/78 supports-backdrop-filter:backdrop-blur-md"
               style={
                 resolvedNavHeight === undefined
-                  ? undefined
-                  : { height: `${resolvedNavHeight}px` }
+                  ? { maxHeight: maxPopoverHeightStyle }
+                  : {
+                      height: `${resolvedNavHeight}px`,
+                      maxHeight: maxPopoverHeightStyle,
+                    }
               }
             >
-              <div
-                ref={navContentInnerRef}
-                className={cn(
-                  "space-y-4",
-                  hasScrollableNavContent && "max-h-144 overflow-y-auto pr-2",
-                )}
+              <ScrollArea
+                className="w-full"
+                style={{
+                  height:
+                    resolvedNavHeight === undefined
+                      ? maxPopoverHeightStyle
+                      : `${resolvedNavHeight}px`,
+                  maxHeight: maxPopoverHeightStyle,
+                }}
               >
-                <div className="space-y-2">
-                  <p className="text-xs uppercase tracking-[0.12em] text-muted-foreground">
-                    Presentation Navigation
-                  </p>
-                </div>
-
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">
-                      {activePlatformLabel}
-                    </span>
-                    <span>
-                      {activePlatformPosition}/{activePlatformTotal || 1}
-                    </span>
+                <div
+                  ref={navContentInnerRef}
+                  className={cn(
+                    "space-y-4 p-4",
+                    hasScrollableNavContent && "pr-3",
+                  )}
+                >
+                  <div className="space-y-2">
+                    <p className="text-xs uppercase tracking-[0.12em] text-muted-foreground">
+                      Presentation Navigation
+                    </p>
                   </div>
-                  <div className="h-1.5 bg-muted/80">
-                    <div
-                      className="h-full bg-secondary transition-[width] duration-200 ease-out"
-                      style={{
-                        width: `${platformProgressPercentage}%`,
+
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">
+                        {activePlatformLabel}
+                      </span>
+                      <span>
+                        {activePlatformPosition}/{activePlatformTotal || 1}
+                      </span>
+                    </div>
+                    <div className="h-1.5 bg-muted/80">
+                      <div
+                        className="h-full bg-secondary transition-[width] duration-200 ease-out"
+                        style={{
+                          width: `${platformProgressPercentage}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <Button
+                      type="button"
+                      size="default"
+                      variant="outline"
+                      onClick={() => {
+                        navigateByOffset(-1);
                       }}
-                    />
+                    >
+                      <ArrowUpIcon />
+                      Prev
+                    </Button>
+                    <Button
+                      type="button"
+                      size="default"
+                      variant="outline"
+                      onClick={() => {
+                        navigateByOffset(1);
+                      }}
+                    >
+                      <ArrowDownIcon />
+                      Next
+                    </Button>
                   </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2.5">
-                  <Button
-                    type="button"
-                    size="default"
-                    variant="outline"
-                    onClick={() => {
-                      navigateByOffset(-1);
-                    }}
-                  >
-                    <ArrowUpIcon />
-                    Prev
-                  </Button>
-                  <Button
-                    type="button"
-                    size="default"
-                    variant="outline"
-                    onClick={() => {
-                      navigateByOffset(1);
-                    }}
-                  >
-                    <ArrowDownIcon />
-                    Next
-                  </Button>
-                </div>
 
                 <div className="space-y-2.5">
+                  <button
+                    type="button"
+                    onClick={navigateToConcept}
+                    className="flex w-full items-center gap-2 border border-border/60 bg-background/30 px-2.5 py-2 text-left text-[13px] text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+                  >
+                    <FileTextIcon className="size-3.5" />
+                    Platform Concept
+                  </button>
                   {(["web", "mobile"] as const).map((platform) => {
-                    const platformScreens =
-                      platform === "web" ? webSections : mobileSections;
-                    const isExpanded = expandedGroups[platform];
-                    const isPlatformActive = activePlatform === platform;
-                    const title =
-                      platform === "web" ? "Web Screens" : "Mobile Screens";
-                    const PlatformIcon =
-                      platform === "web" ? MonitorIcon : SmartphoneIcon;
+                      const platformScreens =
+                        platform === "web" ? webSections : mobileSections;
+                      const isExpanded = expandedGroups[platform];
+                      const isPlatformActive = activePlatform === platform;
+                      const title =
+                        platform === "web" ? "Web Screens" : "Mobile Screens";
+                      const PlatformIcon =
+                        platform === "web" ? MonitorIcon : SmartphoneIcon;
 
-                    return (
-                      <Collapsible
-                        key={platform}
-                        open={isExpanded}
-                        onOpenChange={(open) => {
-                          setExpandedGroups((previous) => ({
-                            ...previous,
-                            [platform]: open,
-                          }));
-                        }}
-                        className="border border-border/60 bg-background/30"
-                      >
-                        <CollapsibleTrigger
-                          className={cn(
-                            "flex w-full items-center justify-between px-2.5 py-2 text-left text-[13px]",
-                            isPlatformActive
-                              ? "text-foreground"
-                              : "text-muted-foreground",
-                          )}
+                      return (
+                        <Collapsible
+                          key={platform}
+                          open={isExpanded}
+                          onOpenChange={(open) => {
+                            setExpandedGroups((previous) => ({
+                              ...previous,
+                              [platform]: open,
+                            }));
+                          }}
+                          className="border border-border/60 bg-background/30"
                         >
-                          <span className="inline-flex items-center gap-2">
-                            <PlatformIcon className="size-3.5" />
-                            {title}
-                          </span>
-                          {isExpanded ? (
-                            <ChevronDownIcon className="size-3.5" />
-                          ) : (
-                            <ChevronRightIcon className="size-3.5" />
-                          )}
-                        </CollapsibleTrigger>
+                          <CollapsibleTrigger
+                            className={cn(
+                              "flex w-full items-center justify-between px-2.5 py-2 text-left text-[13px]",
+                              isPlatformActive
+                                ? "text-foreground"
+                                : "text-muted-foreground",
+                            )}
+                          >
+                            <span className="inline-flex items-center gap-2">
+                              <PlatformIcon className="size-3.5" />
+                              {title}
+                            </span>
+                            {isExpanded ? (
+                              <ChevronDownIcon className="size-3.5" />
+                            ) : (
+                              <ChevronRightIcon className="size-3.5" />
+                            )}
+                          </CollapsibleTrigger>
 
-                        <CollapsibleContent className="nav-collapsible-content overflow-hidden border-t border-border/70">
-                          <div className="min-h-0 space-y-1.5 p-1.5">
-                            {platformScreens.map((screen, index) => {
-                              const isActive =
-                                activeSectionId === screen.sectionId;
+                          <CollapsibleContent className="nav-collapsible-content overflow-hidden border-t border-border/70">
+                            <div className="min-h-0 space-y-1.5 p-1.5">
+                              {platformScreens.map((screen, index) => {
+                                const isActive =
+                                  activeSectionId === screen.sectionId;
 
-                              return (
-                                <button
-                                  key={screen.sectionId}
-                                  type="button"
-                                  onClick={() => {
-                                    void navigateToSection(screen.sectionId);
-                                    setIsNavOpen(false);
-                                  }}
-                                  className={cn(
-                                    "flex w-full items-center gap-2 px-2.5 py-1.5 text-left text-xs transition-[opacity,background-color,color] duration-200 ease-out",
-                                    isExpanded ? "opacity-100" : "opacity-0",
-                                    isActive
-                                      ? "bg-muted text-foreground"
-                                      : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
-                                  )}
-                                  style={
-                                    isExpanded
-                                      ? { transitionDelay: `${index * 24}ms` }
-                                      : undefined
-                                  }
-                                  aria-current={isActive ? "true" : undefined}
-                                >
-                                  <span className="w-7 shrink-0 text-[11px] opacity-80">
-                                    {String(screen.order).padStart(2, "0")}
-                                  </span>
-                                  <span className="truncate">
-                                    {screen.label}
-                                  </span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </CollapsibleContent>
-                      </Collapsible>
-                    );
-                  })}
+                                return (
+                                  <button
+                                    key={screen.sectionId}
+                                    type="button"
+                                    onClick={() => {
+                                      void navigateToSection(screen.sectionId);
+                                      setIsNavOpen(false);
+                                    }}
+                                    className={cn(
+                                      "flex w-full items-center gap-2 px-2.5 py-1.5 text-left text-xs transition-[opacity,background-color,color] duration-200 ease-out",
+                                      isExpanded ? "opacity-100" : "opacity-0",
+                                      isActive
+                                        ? "bg-muted text-foreground"
+                                        : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
+                                    )}
+                                    style={
+                                      isExpanded
+                                        ? { transitionDelay: `${index * 24}ms` }
+                                        : undefined
+                                    }
+                                    aria-current={
+                                      isActive ? "true" : undefined
+                                    }
+                                  >
+                                    <span className="w-7 shrink-0 text-[11px] opacity-80">
+                                      {String(index + 1).padStart(2, "0")}
+                                    </span>
+                                    <span className="truncate">
+                                      {screen.label}
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </CollapsibleContent>
+                        </Collapsible>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              </ScrollArea>
             </PopoverContent>
           </Popover>
         </div>

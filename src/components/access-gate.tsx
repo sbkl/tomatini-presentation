@@ -232,12 +232,17 @@ export function AccessGate({ children }: AccessGateProps) {
       <form className="mt-2 grid gap-3" onSubmit={handleDisclaimerSubmit}>
         <div className="grid gap-2 text-xs text-muted-foreground">
           <p>
-            The concept and presentation content are proprietary to SBKL Limited, except for
-            client-owned assets used in this presentation.
+            The concept and presentation content are owned by SBKL Limited, except for
+            client-owned assets included in this presentation.
           </p>
           <p>
-            This material is confidential and must not be shared, reproduced, distributed, or
-            disclosed externally without prior written approval from SBKL Limited.
+            This material is confidential. It may be used internally only for presentation and
+            review.
+          </p>
+          <p>
+            It must not be shared outside your organization, and it must not be used as a basis
+            for development, including any design, UI, or UX implementation, without prior written
+            approval from SBKL Limited.
           </p>
         </div>
         <label className="flex items-start gap-2 text-xs leading-relaxed text-foreground">
