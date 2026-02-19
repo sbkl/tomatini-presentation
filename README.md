@@ -2,6 +2,14 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+Create a `.env.local` file and set the access code:
+
+```bash
+CODE=your-secret-code
+```
+
+The app stores the submitted code in `localStorage` under `sbkl-access` and re-validates it on every page load by calling `POST /api/access`.
+
 First, run the development server:
 
 ```bash

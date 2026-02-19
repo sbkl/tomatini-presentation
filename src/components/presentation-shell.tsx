@@ -158,7 +158,6 @@ export function PresentationShell({
 
   const isProgrammaticScrollRef = useRef(false);
   const unlockTimerRef = useRef<number | null>(null);
-  const visibilityRatiosRef = useRef(new Map<string, number>());
   const sectionRefs = useRef(new Map<string, HTMLElement>());
   const navContentInnerRef = useRef<HTMLDivElement>(null);
   const activeSectionIdRef = useRef<string | null>(activeSectionId);
@@ -267,31 +266,37 @@ export function PresentationShell({
     }
 
     const anchor = Math.min(180, window.innerHeight * 0.22);
-    let bestIndex = -1;
-    let bestDistance = Number.POSITIVE_INFINITY;
+    let activeIndex = -1;
+    let hasMeasuredSection = false;
 
     sections.forEach((section, index) => {
       const element = sectionRefs.current.get(section.sectionId);
       if (!element) {
         return;
       }
+      hasMeasuredSection = true;
 
-      const distance = Math.abs(element.getBoundingClientRect().top - anchor);
-      if (distance < bestDistance) {
-        bestDistance = distance;
-        bestIndex = index;
+      const top = element.getBoundingClientRect().top;
+      // Use an anchor-line crossing model for stable upward/downward transitions.
+      if (top <= anchor + 1) {
+        activeIndex = index;
       }
     });
 
-    if (bestIndex !== -1) {
-      return bestIndex;
+    if (activeIndex !== -1) {
+      return activeIndex;
     }
 
-    return activeSectionIdRef.current
-      ? sections.findIndex(
-          (section) => section.sectionId === activeSectionIdRef.current,
-        )
-      : -1;
+    if (!hasMeasuredSection) {
+      return activeSectionIdRef.current
+        ? sections.findIndex(
+            (section) => section.sectionId === activeSectionIdRef.current,
+          )
+        : -1;
+    }
+
+    // Before the first section reaches the anchor line, keep first section active.
+    return 0;
   }, [sections]);
 
   const navigateByOffset = useCallback(
@@ -316,6 +321,49 @@ export function PresentationShell({
     },
     [getViewportSectionIndex, navigateToSection, sections],
   );
+
+  const syncActiveSectionById = useCallback(
+    (candidateId: string) => {
+      if (!candidateId || candidateId === activeSectionIdRef.current) {
+        return;
+      }
+
+      const nextSection = sectionById.get(candidateId);
+      if (!nextSection) {
+        return;
+      }
+
+      activeSectionIdRef.current = candidateId;
+      setActiveSectionId(candidateId);
+      updateLastVisited(nextSection);
+      updateHash(nextSection);
+
+      if (nextSection.platform === "mobile") {
+        setExpandedGroups((previous) =>
+          previous.mobile ? previous : { ...previous, mobile: true },
+        );
+      }
+    },
+    [sectionById, updateHash, updateLastVisited],
+  );
+
+  const syncActiveSectionFromViewport = useCallback(() => {
+    if (isProgrammaticScrollRef.current) {
+      return;
+    }
+
+    const index = getViewportSectionIndex();
+    if (index < 0) {
+      return;
+    }
+
+    const section = sections[index];
+    if (!section) {
+      return;
+    }
+
+    syncActiveSectionById(section.sectionId);
+  }, [getViewportSectionIndex, sections, syncActiveSectionById]);
 
   useEffect(() => {
     activeSectionIdRef.current = activeSectionId;
@@ -393,66 +441,14 @@ export function PresentationShell({
       return;
     }
 
-    visibilityRatiosRef.current = new Map(
-      observedSections.map((element) => [element.dataset.sectionId ?? "", 0]),
-    );
-
     const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          const sectionId =
-            (entry.target as HTMLElement).dataset.sectionId ?? "";
-          if (!sectionId) {
-            continue;
-          }
-
-          visibilityRatiosRef.current.set(
-            sectionId,
-            entry.isIntersecting ? entry.intersectionRatio : 0,
-          );
-        }
-
-        if (isProgrammaticScrollRef.current) {
-          return;
-        }
-
-        let candidateId: string | null = null;
-        let candidateRatio = 0;
-        for (const [sectionId, ratio] of visibilityRatiosRef.current) {
-          if (ratio > candidateRatio) {
-            candidateId = sectionId;
-            candidateRatio = ratio;
-          }
-        }
-
-        if (
-          !candidateId ||
-          candidateRatio <= 0 ||
-          candidateId === activeSectionIdRef.current
-        ) {
-          return;
-        }
-
-        const nextSection = sectionById.get(candidateId);
-        if (!nextSection) {
-          return;
-        }
-
-        activeSectionIdRef.current = candidateId;
-        setActiveSectionId(candidateId);
-        updateLastVisited(nextSection);
-        updateHash(nextSection);
-
-        if (nextSection.platform === "mobile") {
-          setExpandedGroups((previous) =>
-            previous.mobile ? previous : { ...previous, mobile: true },
-          );
-        }
+      () => {
+        syncActiveSectionFromViewport();
       },
       {
         root: null,
-        rootMargin: "-18% 0px -52% 0px",
-        threshold: [0.15, 0.35, 0.55, 0.75],
+        rootMargin: "-22% 0px -48% 0px",
+        threshold: [0, 0.01, 0.1, 0.3, 0.6, 1],
       },
     );
 
@@ -461,7 +457,34 @@ export function PresentationShell({
     return () => {
       observer.disconnect();
     };
-  }, [sectionById, sections, updateHash, updateLastVisited]);
+  }, [sections, syncActiveSectionFromViewport]);
+
+  useEffect(() => {
+    let frameId: number | null = null;
+
+    const onViewportChange = () => {
+      if (frameId !== null) {
+        return;
+      }
+
+      frameId = window.requestAnimationFrame(() => {
+        frameId = null;
+        syncActiveSectionFromViewport();
+      });
+    };
+
+    window.addEventListener("scroll", onViewportChange, { passive: true });
+    window.addEventListener("resize", onViewportChange);
+    onViewportChange();
+
+    return () => {
+      window.removeEventListener("scroll", onViewportChange);
+      window.removeEventListener("resize", onViewportChange);
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
+      }
+    };
+  }, [syncActiveSectionFromViewport]);
 
   useEffect(() => {
     if (!isNavOpen) {
@@ -555,16 +578,19 @@ export function PresentationShell({
               }
             }}
           >
-            <PopoverTrigger>
-              <Button
-                type="button"
-                variant="outline"
-                className="pointer-events-auto size-14 rounded-full border-border/70 bg-background/92 shadow-[0_10px_24px_-12px_rgba(0,0,0,0.4)] supports-backdrop-filter:bg-background/72 supports-backdrop-filter:backdrop-blur-md"
-                aria-label="Open presentation navigation"
-              >
-                <ListIcon className="size-6" strokeWidth={2.2} />
-              </Button>
-            </PopoverTrigger>
+            <PopoverTrigger
+              render={(props) => (
+                <Button
+                  {...props}
+                  type="button"
+                  variant="outline"
+                  className="pointer-events-auto size-14 rounded-full border-border/70 bg-background/92 shadow-[0_10px_24px_-12px_rgba(0,0,0,0.4)] supports-backdrop-filter:bg-background/72 supports-backdrop-filter:backdrop-blur-md"
+                  aria-label="Open presentation navigation"
+                >
+                  <ListIcon className="size-6" strokeWidth={2.2} />
+                </Button>
+              )}
+            />
             <PopoverContent
               side="bottom"
               align="end"

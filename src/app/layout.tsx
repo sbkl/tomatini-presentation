@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { AccessGate } from "@/components/access-gate";
 import { versailles } from "@/lib/fonts";
 import "./globals.css";
 
@@ -28,7 +29,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${versailles.variable} antialiased font-versailles`}
       >
-        {children}
+        <AccessGate>{children}</AccessGate>
       </body>
     </html>
   );
