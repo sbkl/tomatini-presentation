@@ -22,7 +22,7 @@ const quoteLineItems: readonly QuoteLineItem[] = [
   {
     category: "Maintenance",
     description:
-      "Post-launch support, bug fixing, and iterative enhancements to keep the platform stable and aligned with operations.",
+      "Post-launch support, bug fixing, security monitoring, and iterative enhancements to keep the platform stable and aligned with operations.",
     cost: 1000,
     cadence: "monthly",
   },
@@ -30,8 +30,8 @@ const quoteLineItems: readonly QuoteLineItem[] = [
     category: "Infra",
     description:
       "Infrastructure setup and operational costs for hosting, environments, observability, and reliability foundations.",
-    estimatedMinCost: 300,
-    estimatedMaxCost: 400,
+    estimatedMinCost: 100,
+    estimatedMaxCost: 200,
     cadence: "monthly",
     isEstimate: true,
   },
@@ -108,7 +108,7 @@ export function QuotePage({ className }: QuotePageProps) {
   const formatLineItemCost = (item: QuoteLineItem) => {
     const perRestaurantLabel =
       typeof item.variableCostPerRestaurant === "number"
-        ? `${formatCurrency(item.variableCostPerRestaurant)}/month per restaurant`
+        ? `${formatCurrency(item.variableCostPerRestaurant)}/month/site`
         : null;
 
     if (
@@ -126,7 +126,10 @@ export function QuotePage({ className }: QuotePageProps) {
         ? `${baseLabel} + ${perRestaurantLabel}`
         : baseLabel;
     }
-    return perRestaurantLabel ?? (item.cadence === "monthly" ? "USD 0/month" : "USD 0");
+    return (
+      perRestaurantLabel ??
+      (item.cadence === "monthly" ? "USD 0/month" : "USD 0")
+    );
   };
   const monthlyBaseLabel =
     ongoingMonthlyBaseMinCost === ongoingMonthlyBaseMaxCost
@@ -172,7 +175,7 @@ export function QuotePage({ className }: QuotePageProps) {
             </p>
             <p className="mt-2 text-2xl">
               {monthlyBaseLabel} +{" "}
-              {formatCurrency(supportVariablePerRestaurant)}/month per restaurant
+              {formatCurrency(supportVariablePerRestaurant)}/month/site
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
               Includes Maintenance, Infra, AI, and user support.
@@ -189,11 +192,11 @@ export function QuotePage({ className }: QuotePageProps) {
         <p className="mt-6 text-xs uppercase tracking-[0.12em] text-muted-foreground">
           Detailed Pricing
         </p>
-        <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+        <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
           {quoteLineItems.map((item) => (
             <article
               key={item.category}
-              className="border border-border/70 bg-background/75 p-4"
+              className="flex h-full flex-col border border-border/70 bg-background/75 p-4"
             >
               <h3 className="text-xs uppercase tracking-[0.12em] text-muted-foreground">
                 {item.category}
@@ -201,9 +204,11 @@ export function QuotePage({ className }: QuotePageProps) {
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                 {item.description}
               </p>
-              <p className="mt-3 inline-flex border border-border/70 bg-background px-2 py-1 text-[11px] uppercase tracking-[0.08em] text-black">
-                {formatLineItemCost(item)}
-              </p>
+              <div className="mt-auto pt-3">
+                <p className="inline-flex self-start border border-border/70 bg-background px-2 py-1 text-[11px] uppercase tracking-[0.08em] text-black">
+                  {formatLineItemCost(item)}
+                </p>
+              </div>
             </article>
           ))}
         </div>
