@@ -427,14 +427,17 @@ export function TeamsContent() {
                     </div>
                   </ScrollArea>
                 </div>
-                <InputGroup className="h-auto border-secondary/55 bg-background shadow-[0_0_0_1px_color-mix(in_oklch,var(--secondary)_28%,transparent),0_16px_24px_-22px_oklch(0.6489_0.1708_28.21)]">
+                <InputGroup className="h-auto border-border bg-background shadow-[0_16px_24px_-22px_oklch(0.6489_0.1708_28.21)]">
                   <InputGroupTextarea
                     value={chatPrompt}
                     onChange={(event) => setChatPrompt(event.target.value)}
                     className="min-h-20 placeholder:text-foreground/45"
                     placeholder="Ask about team progress, gaps, and coaching priorities..."
                     onKeyDown={(event) => {
-                      if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+                      if (
+                        (event.metaKey || event.ctrlKey) &&
+                        event.key === "Enter"
+                      ) {
                         event.preventDefault();
                         handleSimulationSend();
                       }
@@ -442,7 +445,7 @@ export function TeamsContent() {
                   />
                   <InputGroupAddon
                     align="block-end"
-                    className="border-t border-border/85 pt-2"
+                    className="border-t border-border pt-2"
                   >
                     <InputGroupText className="text-foreground/70">
                       Press Cmd/Ctrl + Enter to send
@@ -499,8 +502,12 @@ export function TeamsContent() {
                         <h3 className="text-sm uppercase tracking-[0.12em]">
                           Team Snapshot
                         </h3>
-                        <Badge variant="outline" className={outlinedSecondaryBadgeClass}>
-                          {fixedContext.restaurantLabel} · {fixedContext.reportWindowLabel}
+                        <Badge
+                          variant="outline"
+                          className={outlinedSecondaryBadgeClass}
+                        >
+                          {fixedContext.restaurantLabel} ·{" "}
+                          {fixedContext.reportWindowLabel}
                         </Badge>
                       </div>
                       <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
@@ -512,8 +519,12 @@ export function TeamsContent() {
                             <p className="text-muted-foreground text-[10px] uppercase tracking-[0.14em]">
                               {metric.label}
                             </p>
-                            <p className="mt-1 text-lg leading-none">{metric.value}</p>
-                            <p className="text-muted-foreground mt-1 text-xs">{metric.note}</p>
+                            <p className="mt-1 text-lg leading-none">
+                              {metric.value}
+                            </p>
+                            <p className="text-muted-foreground mt-1 text-xs">
+                              {metric.note}
+                            </p>
                             <p
                               className={cn(
                                 "mt-1 text-[11px] leading-tight",
@@ -537,8 +548,12 @@ export function TeamsContent() {
                             <tr className="bg-muted/45 border-b border-border">
                               <th className="px-3 py-2 text-left">Module</th>
                               <th className="px-3 py-2 text-left">Audience</th>
-                              <th className="px-3 py-2 text-left">Completion</th>
-                              <th className="px-3 py-2 text-left">Avg Correctness</th>
+                              <th className="px-3 py-2 text-left">
+                                Completion
+                              </th>
+                              <th className="px-3 py-2 text-left">
+                                Avg Correctness
+                              </th>
                               <th className="px-3 py-2 text-left">Stalled</th>
                             </tr>
                           </thead>
@@ -552,9 +567,15 @@ export function TeamsContent() {
                                 <td className="text-muted-foreground px-3 py-2">
                                   {item.audience}
                                 </td>
-                                <td className="px-3 py-2">{item.completion}%</td>
-                                <td className="px-3 py-2">{item.correctness}%</td>
-                                <td className="px-3 py-2">{item.stalledLearners}</td>
+                                <td className="px-3 py-2">
+                                  {item.completion}%
+                                </td>
+                                <td className="px-3 py-2">
+                                  {item.correctness}%
+                                </td>
+                                <td className="px-3 py-2">
+                                  {item.stalledLearners}
+                                </td>
                               </tr>
                             ))}
                           </tbody>
@@ -568,7 +589,10 @@ export function TeamsContent() {
                       </h3>
                       <div className="divide-y divide-border">
                         {discussionsThisWeek.slice(0, 4).map((record) => (
-                          <article key={`discussion-${record.id}`} className="space-y-1 py-2">
+                          <article
+                            key={`discussion-${record.id}`}
+                            className="space-y-1 py-2"
+                          >
                             <div className="flex items-start justify-between gap-2">
                               <p className="text-sm">{record.teamMember}</p>
                               <Badge
@@ -596,15 +620,19 @@ export function TeamsContent() {
                       <table className="w-full text-xs">
                         <thead>
                           <tr className="bg-muted/45 border-b border-border">
-                            <th className="min-w-[15rem] px-3 py-2 text-left">
+                            <th className="min-w-60 px-3 py-2 text-left">
                               Team Member
                             </th>
                             <th className="px-3 py-2 text-left">Role</th>
                             <th className="px-3 py-2 text-left">Module</th>
-                            <th className="px-3 py-2 text-left">Weak Competency</th>
+                            <th className="px-3 py-2 text-left">
+                              Weak Competency
+                            </th>
                             <th className="px-3 py-2 text-left">Current</th>
                             <th className="px-3 py-2 text-left">Risk</th>
-                            <th className="px-3 py-2 text-left">Discussion Owner</th>
+                            <th className="px-3 py-2 text-left">
+                              Discussion Owner
+                            </th>
                           </tr>
                         </thead>
                         <tbody>
@@ -613,7 +641,7 @@ export function TeamsContent() {
                               key={record.id}
                               className="border-b border-border align-top last:border-b-0"
                             >
-                              <td className="min-w-[15rem] px-3 py-2">
+                              <td className="min-w-60 px-3 py-2">
                                 <p>{record.teamMember}</p>
                                 <p className="text-muted-foreground mt-1 text-[11px] leading-relaxed">
                                   {record.coachingSuggestion}
@@ -625,7 +653,8 @@ export function TeamsContent() {
                               <td className="px-3 py-2">{record.module}</td>
                               <td className="px-3 py-2">{record.gapArea}</td>
                               <td className="px-3 py-2">
-                                {record.currentScore}% score · {record.completion}% completion
+                                {record.currentScore}% score ·{" "}
+                                {record.completion}% completion
                               </td>
                               <td className="px-3 py-2">
                                 <Badge
@@ -636,7 +665,9 @@ export function TeamsContent() {
                                   {record.risk}
                                 </Badge>
                               </td>
-                              <td className="px-3 py-2">{record.discussionOwner}</td>
+                              <td className="px-3 py-2">
+                                {record.discussionOwner}
+                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -673,7 +704,9 @@ export function TeamsContent() {
                             <p className="text-muted-foreground text-xs">
                               Owner: {action.owner} · Due: {action.dueDate}
                             </p>
-                            <p className="text-xs">Success check: {action.expectedOutcome}</p>
+                            <p className="text-xs">
+                              Success check: {action.expectedOutcome}
+                            </p>
                           </article>
                         ))}
                       </div>

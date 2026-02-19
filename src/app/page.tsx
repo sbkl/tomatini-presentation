@@ -1,11 +1,8 @@
-import { AgentsDetailsPage } from "@/components/agents-details-page";
-import { DashboardPage } from "@/components/dashboard-page";
+"use client";
+
 import { Logo } from "@/components/logo";
-import { RecipeCreationPage } from "@/components/recipe-creation-page";
-import { RecipeLibraryPage } from "@/components/recipe-library-page";
-import { TeamsPage } from "@/components/teams-page";
-import { TrainingModuleDetailsPage } from "@/components/training-module-details-page";
-import { TrainingModulesPage } from "@/components/training-modules-page";
+import { PresentationShell } from "@/components/presentation-shell";
+import { presentationRegistry } from "@/lib/presentation-screens";
 
 export default function Home() {
   return (
@@ -23,13 +20,7 @@ export default function Home() {
           </div>
         </div>
       </header>
-      <DashboardPage />
-      <RecipeLibraryPage />
-      <RecipeCreationPage />
-      <TrainingModulesPage />
-      <TrainingModuleDetailsPage />
-      <TeamsPage />
-      <AgentsDetailsPage />
+      <PresentationShell registry={presentationRegistry} className="pt-8 sm:pt-10" />
     </div>
   );
 }

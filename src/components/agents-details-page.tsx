@@ -10,7 +10,7 @@ export function AgentsDetailsPage() {
       primaryNav={primaryNav}
       className="h-full"
       activeNavItemId="agents"
-      sectionTitle="Screen 06: Agents Details"
+      sectionTitle="Screen 07: Agents Details"
       sectionBullets={[
         "Agent workspace with one selector for Host, Chef, Clienteling, FOH, and Training profiles.",
         "Split view mirrors other detail screens with chat on the left and editable content on the right.",

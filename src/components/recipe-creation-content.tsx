@@ -123,6 +123,7 @@ const ALL_RESTAURANTS_VALUE = "__all_restaurants__";
 const ALL_GROUP_PREFIX = "__all_group__:";
 
 const allRestaurants = restaurantOptions.flatMap((group) => group.restaurants);
+const allRestaurantsSet = new Set<string>(allRestaurants);
 const bulkRestaurantValues = restaurantOptions.map(
   (group) => `${ALL_GROUP_PREFIX}${group.concept}`,
 );
@@ -527,7 +528,7 @@ export function RecipeCreationContent() {
                 </ScrollArea>
               </div>
 
-              <InputGroup className="h-auto border-secondary/55 bg-background shadow-[0_0_0_1px_color-mix(in_oklch,var(--secondary)_28%,transparent),0_16px_24px_-22px_oklch(0.6489_0.1708_28.21)]">
+              <InputGroup className="h-auto border-border bg-background shadow-[0_16px_24px_-22px_oklch(0.6489_0.1708_28.21)]">
                 <InputGroupTextarea
                   value={prompt}
                   onChange={(event) => setPrompt(event.target.value)}
@@ -537,7 +538,7 @@ export function RecipeCreationContent() {
                 />
                 <InputGroupAddon
                   align="block-end"
-                  className="border-t border-border/85 pt-2"
+                  className="border-t border-border pt-2"
                 >
                   <InputGroupText className="text-foreground/70">
                     Press Cmd/Ctrl + Enter to generate
@@ -666,7 +667,7 @@ export function RecipeCreationContent() {
                       const selectedRestaurants = value.filter(
                         (entry): entry is (typeof allRestaurants)[number] =>
                           typeof entry === "string" &&
-                          allRestaurants.includes(entry as any),
+                          allRestaurantsSet.has(entry),
                       );
                       setAssignedRestaurants(selectedRestaurants);
                     }}
