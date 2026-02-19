@@ -9,6 +9,7 @@ import {
   FileTextIcon,
   ListIcon,
   MonitorIcon,
+  PuzzleIcon,
   SmartphoneIcon,
 } from "lucide-react";
 
@@ -42,6 +43,10 @@ const NAV_POPOVER_MAX_HEIGHT = 576;
 const NAV_POPOVER_VIEWPORT_GUTTER = 96;
 const SECTION_SCROLL_TOP_OFFSET = 55;
 const PLATFORM_CONCEPT_ID = "presentation-platform-concept";
+const FACTORIAL_INTEGRATION_SECTION_ID = toPresentationSectionId(
+  "mobile",
+  "factorial-integration",
+);
 
 type PresentationSection = PresentationScreen & {
   sectionId: string;
@@ -359,6 +364,11 @@ export function PresentationShell({
 
     setIsNavOpen(false);
   }, []);
+
+  const navigateToFactorialIntegration = useCallback(() => {
+    void navigateToSection(FACTORIAL_INTEGRATION_SECTION_ID);
+    setIsNavOpen(false);
+  }, [navigateToSection]);
 
   const syncActiveSectionById = useCallback(
     (candidateId: string) => {
@@ -723,8 +733,14 @@ export function PresentationShell({
                     Platform Concept
                   </button>
                   {(["web", "mobile"] as const).map((platform) => {
-                      const platformScreens =
-                        platform === "web" ? webSections : mobileSections;
+                    const platformScreens =
+                      platform === "web"
+                        ? webSections
+                        : mobileSections.filter(
+                            (screen) =>
+                              screen.sectionId !==
+                              FACTORIAL_INTEGRATION_SECTION_ID,
+                          );
                       const isExpanded = expandedGroups[platform];
                       const isPlatformActive = activePlatform === platform;
                       const title =
@@ -804,10 +820,23 @@ export function PresentationShell({
                               })}
                             </div>
                           </CollapsibleContent>
-                        </Collapsible>
-                      );
-                    })}
-                  </div>
+                      </Collapsible>
+                    );
+                  })}
+                  <button
+                    type="button"
+                    onClick={navigateToFactorialIntegration}
+                    className={cn(
+                      "flex w-full items-center gap-2 border border-border/60 bg-background/30 px-2.5 py-2 text-left text-[13px] transition-colors",
+                      activeSectionId === FACTORIAL_INTEGRATION_SECTION_ID
+                        ? "bg-muted text-foreground"
+                        : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+                    )}
+                  >
+                    <PuzzleIcon className="size-3.5" />
+                    Factorial Integration
+                  </button>
+                </div>
                 </div>
               </ScrollArea>
             </PopoverContent>
