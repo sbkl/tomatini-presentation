@@ -38,7 +38,10 @@ import type {
   PresentationScreen,
 } from "@/lib/presentation-screens";
 
-const SCROLL_SYNC_UNLOCK_MS = 220;
+const SCROLL_SYNC_FALLBACK_UNLOCK_MS = 1600;
+const SCROLL_SETTLE_NEAR_TARGET_PX = 3;
+const SCROLL_SETTLE_DELTA_PX = 0.75;
+const SCROLL_SETTLE_FRAMES = 4;
 const NAV_POPOVER_MAX_HEIGHT = 576;
 const NAV_POPOVER_VIEWPORT_GUTTER = 96;
 const SECTION_SCROLL_TOP_OFFSET = 55;
@@ -167,6 +170,7 @@ export function PresentationShell({
 
   const isProgrammaticScrollRef = useRef(false);
   const unlockTimerRef = useRef<number | null>(null);
+  const unlockFrameRef = useRef<number | null>(null);
   const sectionRefs = useRef(new Map<string, HTMLElement>());
   const navContentInnerRef = useRef<HTMLDivElement>(null);
   const activeSectionIdRef = useRef<string | null>(activeSectionId);
@@ -203,6 +207,69 @@ export function PresentationShell({
     }
   }, []);
 
+  const clearProgrammaticScrollSync = useCallback(() => {
+    if (unlockTimerRef.current !== null) {
+      window.clearTimeout(unlockTimerRef.current);
+      unlockTimerRef.current = null;
+    }
+    if (unlockFrameRef.current !== null) {
+      window.cancelAnimationFrame(unlockFrameRef.current);
+      unlockFrameRef.current = null;
+    }
+  }, []);
+
+  const releaseProgrammaticScrollLock = useCallback(() => {
+    clearProgrammaticScrollSync();
+    isProgrammaticScrollRef.current = false;
+  }, [clearProgrammaticScrollSync]);
+
+  const lockProgrammaticScroll = useCallback(
+    (targetTop: number, behavior: ScrollBehavior) => {
+      clearProgrammaticScrollSync();
+      isProgrammaticScrollRef.current = true;
+
+      if (behavior !== "smooth") {
+        unlockTimerRef.current = window.setTimeout(() => {
+          releaseProgrammaticScrollLock();
+        }, 40);
+        return;
+      }
+
+      let stableFrames = 0;
+      let previousY = window.scrollY;
+
+      const checkSettle = () => {
+        const currentY = window.scrollY;
+        const distanceToTarget = Math.abs(currentY - targetTop);
+        const movedDistance = Math.abs(currentY - previousY);
+
+        if (
+          distanceToTarget <= SCROLL_SETTLE_NEAR_TARGET_PX ||
+          (distanceToTarget <= SECTION_SCROLL_TOP_OFFSET &&
+            movedDistance <= SCROLL_SETTLE_DELTA_PX)
+        ) {
+          stableFrames += 1;
+        } else {
+          stableFrames = 0;
+        }
+
+        if (stableFrames >= SCROLL_SETTLE_FRAMES) {
+          releaseProgrammaticScrollLock();
+          return;
+        }
+
+        previousY = currentY;
+        unlockFrameRef.current = window.requestAnimationFrame(checkSettle);
+      };
+
+      unlockFrameRef.current = window.requestAnimationFrame(checkSettle);
+      unlockTimerRef.current = window.setTimeout(() => {
+        releaseProgrammaticScrollLock();
+      }, SCROLL_SYNC_FALLBACK_UNLOCK_MS);
+    },
+    [clearProgrammaticScrollSync, releaseProgrammaticScrollLock],
+  );
+
   const navigateToSection = useCallback(
     (
       sectionId: string,
@@ -222,13 +289,12 @@ export function PresentationShell({
       }
 
       const behavior = options?.behavior ?? getPreferredScrollBehavior();
-      isProgrammaticScrollRef.current = true;
       const nextTop =
-        window.scrollY +
-        target.getBoundingClientRect().top -
-        SECTION_SCROLL_TOP_OFFSET;
+        window.scrollY + target.getBoundingClientRect().top - SECTION_SCROLL_TOP_OFFSET;
+      const targetTop = Math.max(0, nextTop);
+      lockProgrammaticScroll(targetTop, behavior);
       window.scrollTo({
-        top: Math.max(0, nextTop),
+        top: targetTop,
         behavior,
       });
 
@@ -246,19 +312,9 @@ export function PresentationShell({
         updateHash(section);
       }
 
-      if (unlockTimerRef.current !== null) {
-        window.clearTimeout(unlockTimerRef.current);
-      }
-      unlockTimerRef.current = window.setTimeout(
-        () => {
-          isProgrammaticScrollRef.current = false;
-        },
-        behavior === "smooth" ? SCROLL_SYNC_UNLOCK_MS : 40,
-      );
-
       return true;
     },
-    [sectionById, updateHash, updateLastVisited],
+    [lockProgrammaticScroll, sectionById, updateHash, updateLastVisited],
   );
 
   const getViewportSectionIndex = useCallback(() => {
@@ -341,9 +397,10 @@ export function PresentationShell({
           target.getBoundingClientRect().top -
           SECTION_SCROLL_TOP_OFFSET;
 
-    isProgrammaticScrollRef.current = true;
+    const targetTop = Math.max(0, nextTop);
+    lockProgrammaticScroll(targetTop, behavior);
     window.scrollTo({
-      top: Math.max(0, nextTop),
+      top: targetTop,
       behavior,
     });
 
@@ -352,18 +409,8 @@ export function PresentationShell({
       window.history.replaceState(null, "", nextUrl);
     }
 
-    if (unlockTimerRef.current !== null) {
-      window.clearTimeout(unlockTimerRef.current);
-    }
-    unlockTimerRef.current = window.setTimeout(
-      () => {
-        isProgrammaticScrollRef.current = false;
-      },
-      behavior === "smooth" ? SCROLL_SYNC_UNLOCK_MS : 40,
-    );
-
     setIsNavOpen(false);
-  }, []);
+  }, [lockProgrammaticScroll]);
 
   const navigateToFactorialIntegration = useCallback(() => {
     void navigateToSection(FACTORIAL_INTEGRATION_SECTION_ID);
@@ -419,11 +466,10 @@ export function PresentationShell({
 
   useEffect(() => {
     return () => {
-      if (unlockTimerRef.current !== null) {
-        window.clearTimeout(unlockTimerRef.current);
-      }
+      clearProgrammaticScrollSync();
+      isProgrammaticScrollRef.current = false;
     };
-  }, []);
+  }, [clearProgrammaticScrollSync]);
 
   useEffect(() => {
     if (hasInitializedScrollRef.current || !activeSectionId) {
@@ -437,24 +483,18 @@ export function PresentationShell({
     }
 
     hasInitializedScrollRef.current = true;
-    isProgrammaticScrollRef.current = true;
     const nextTop =
       window.scrollY +
       target.getBoundingClientRect().top -
       SECTION_SCROLL_TOP_OFFSET;
+    const targetTop = Math.max(0, nextTop);
+    lockProgrammaticScroll(targetTop, "auto");
     window.scrollTo({
-      top: Math.max(0, nextTop),
+      top: targetTop,
       behavior: "auto",
     });
     updateHash(initialSection);
-
-    if (unlockTimerRef.current !== null) {
-      window.clearTimeout(unlockTimerRef.current);
-    }
-    unlockTimerRef.current = window.setTimeout(() => {
-      isProgrammaticScrollRef.current = false;
-    }, 40);
-  }, [activeSectionId, sectionById, updateHash]);
+  }, [activeSectionId, lockProgrammaticScroll, sectionById, updateHash]);
 
   useEffect(() => {
     const onHashChange = () => {
