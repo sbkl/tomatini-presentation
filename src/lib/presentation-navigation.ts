@@ -5,10 +5,26 @@ export const LAST_VISITED_STORAGE_KEY: Record<PresentationPlatform, string> = {
   mobile: "presentation:last-mobile-screen",
 };
 
+const GLOBAL_MOBILE_SECTION_IDS = new Set([
+  "agents-driven",
+  "factorial-integration",
+  "development-plan",
+  "quote",
+  "it-review",
+]);
+
+function isGlobalMobileSectionId(screenId: string) {
+  return GLOBAL_MOBILE_SECTION_IDS.has(screenId);
+}
+
 export function toPresentationSectionId(
   platform: PresentationPlatform,
   screenId: string,
 ) {
+  if (platform === "mobile" && isGlobalMobileSectionId(screenId)) {
+    return screenId;
+  }
+
   return `${platform}-${screenId}`;
 }
 
@@ -26,6 +42,13 @@ export function parsePresentationHash(hash: string): {
   const normalized = hash.startsWith("#") ? hash.slice(1) : hash;
   if (!normalized) {
     return null;
+  }
+
+  if (isGlobalMobileSectionId(normalized)) {
+    return {
+      platform: "mobile",
+      screenId: normalized,
+    };
   }
 
   const separatorIndex = normalized.indexOf("-");

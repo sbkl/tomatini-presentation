@@ -5,6 +5,7 @@ import { AgentsDetailsPage } from "@/components/agents-details-page";
 import { DashboardPage } from "@/components/dashboard-page";
 import { DevelopmentPlanPage } from "@/components/development-plan-page";
 import { FactorialIntegrationPage } from "@/components/factorial-integration-page";
+import { ItReviewPage } from "@/components/it-review-page";
 import { MobileChatPage } from "@/components/mobile-chat-page";
 import { MobileDashboardPage } from "@/components/mobile-dashboard-page";
 import { MobileMenusPage } from "@/components/mobile-menus-page";
@@ -220,6 +221,13 @@ export const mobileScreens = [
     label: "Section: Quote",
     order: 11,
     render: () => <QuotePage />,
+  },
+  {
+    platform: "mobile",
+    screenId: "it-review",
+    label: "Section: IT Review Q&A",
+    order: 12,
+    render: () => <ItReviewPage />,
   },
 ] as const satisfies readonly PresentationScreen[];
 

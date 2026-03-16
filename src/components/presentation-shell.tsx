@@ -12,6 +12,7 @@ import {
   ListIcon,
   MonitorIcon,
   PuzzleIcon,
+  ShieldIcon,
   SmartphoneIcon,
 } from "lucide-react";
 
@@ -47,6 +48,7 @@ const SCROLL_SETTLE_FRAMES = 4;
 const NAV_POPOVER_MAX_HEIGHT = 576;
 const NAV_POPOVER_VIEWPORT_GUTTER = 96;
 const SECTION_SCROLL_TOP_OFFSET = 55;
+const NAV_EXPANDED_STORAGE_KEY = "presentation:nav-expanded-groups";
 const PLATFORM_CONCEPT_ID = "presentation-platform-concept";
 const AGENTS_DRIVEN_SECTION_ID = toPresentationSectionId(
   "mobile",
@@ -56,6 +58,7 @@ const FACTORIAL_INTEGRATION_SECTION_ID = toPresentationSectionId(
   "mobile",
   "factorial-integration",
 );
+const IT_REVIEW_SECTION_ID = toPresentationSectionId("mobile", "it-review");
 const DEVELOPMENT_PLAN_SECTION_ID = toPresentationSectionId(
   "mobile",
   "development-plan",
@@ -119,6 +122,10 @@ export function PresentationShell({
 
   const initialNavigation = useMemo(() => {
     const lastVisited = getDefaultLastVisited(registry);
+    let expandedGroups: Record<PresentationPlatform, boolean> = {
+      web: false,
+      mobile: false,
+    };
 
     if (typeof window !== "undefined") {
       const webStored = window.sessionStorage.getItem(
@@ -139,6 +146,33 @@ export function PresentationShell({
         mobileSections.some((screen) => screen.screenId === mobileStored)
       ) {
         lastVisited.mobile = mobileStored;
+      }
+
+      const storedExpandedGroups = window.sessionStorage.getItem(
+        NAV_EXPANDED_STORAGE_KEY,
+      );
+      if (storedExpandedGroups) {
+        try {
+          const parsedExpandedGroups = JSON.parse(storedExpandedGroups) as Partial<
+            Record<PresentationPlatform, boolean>
+          >;
+
+          expandedGroups = {
+            web:
+              typeof parsedExpandedGroups.web === "boolean"
+                ? parsedExpandedGroups.web
+                : false,
+            mobile:
+              typeof parsedExpandedGroups.mobile === "boolean"
+                ? parsedExpandedGroups.mobile
+                : false,
+          };
+        } catch {
+          expandedGroups = {
+            web: false,
+            mobile: false,
+          };
+        }
       }
     }
 
@@ -162,10 +196,7 @@ export function PresentationShell({
 
     return {
       activeSectionId: initialSection?.sectionId ?? null,
-      expandedGroups: {
-        web: true,
-        mobile: initialSection?.platform === "mobile",
-      } satisfies Record<PresentationPlatform, boolean>,
+      expandedGroups,
       lastVisited,
     };
   }, [mobileSections, registry, sections, webSections]);
@@ -186,6 +217,7 @@ export function PresentationShell({
   const navContentInnerRef = useRef<HTMLDivElement>(null);
   const activeSectionIdRef = useRef<string | null>(activeSectionId);
   const hasInitializedScrollRef = useRef(false);
+  const hasHandledInitialHashRef = useRef(false);
 
   const findSection = useCallback(
     (platform: PresentationPlatform, screenId: string) => {
@@ -438,6 +470,11 @@ export function PresentationShell({
     setIsNavOpen(false);
   }, [navigateToSection]);
 
+  const navigateToItReview = useCallback(() => {
+    void navigateToSection(IT_REVIEW_SECTION_ID);
+    setIsNavOpen(false);
+  }, [navigateToSection]);
+
   const navigateToQuote = useCallback(() => {
     void navigateToSection(QUOTE_SECTION_ID);
     setIsNavOpen(false);
@@ -491,6 +528,17 @@ export function PresentationShell({
   }, [activeSectionId]);
 
   useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    window.sessionStorage.setItem(
+      NAV_EXPANDED_STORAGE_KEY,
+      JSON.stringify(expandedGroups),
+    );
+  }, [expandedGroups]);
+
+  useEffect(() => {
     return () => {
       clearProgrammaticScrollSync();
       isProgrammaticScrollRef.current = false;
@@ -521,6 +569,46 @@ export function PresentationShell({
     });
     updateHash(initialSection);
   }, [activeSectionId, lockProgrammaticScroll, sectionById, updateHash]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || hasHandledInitialHashRef.current) {
+      return;
+    }
+
+    const parsedHash = parsePresentationHash(window.location.hash);
+    if (!parsedHash) {
+      hasHandledInitialHashRef.current = true;
+      return;
+    }
+
+    const target = findSection(parsedHash.platform, parsedHash.screenId);
+    if (!target) {
+      hasHandledInitialHashRef.current = true;
+      return;
+    }
+    let frameId: number | null = null;
+
+    const tryNavigate = () => {
+      if (sectionRefs.current.get(target.sectionId)) {
+        hasHandledInitialHashRef.current = true;
+        void navigateToSection(target.sectionId, {
+          behavior: "auto",
+          updateHash: false,
+        });
+        return;
+      }
+
+      frameId = window.requestAnimationFrame(tryNavigate);
+    };
+
+    frameId = window.requestAnimationFrame(tryNavigate);
+
+    return () => {
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
+      }
+    };
+  }, [findSection, navigateToSection, sections]);
 
   useEffect(() => {
     const onHashChange = () => {
@@ -807,6 +895,7 @@ export function PresentationShell({
                                 screen.sectionId !== AGENTS_DRIVEN_SECTION_ID &&
                                 screen.sectionId !==
                                   FACTORIAL_INTEGRATION_SECTION_ID &&
+                                screen.sectionId !== IT_REVIEW_SECTION_ID &&
                                 screen.sectionId !== DEVELOPMENT_PLAN_SECTION_ID &&
                                 screen.sectionId !== QUOTE_SECTION_ID,
                             );
@@ -941,6 +1030,19 @@ export function PresentationShell({
                     >
                       <FileTextIcon className="size-3.5" />
                       Quote
+                    </button>
+                    <button
+                      type="button"
+                      onClick={navigateToItReview}
+                      className={cn(
+                        "flex w-full items-center gap-2 border border-border/60 bg-background/30 px-2.5 py-2 text-left text-[13px] transition-colors",
+                        activeSectionId === IT_REVIEW_SECTION_ID
+                          ? "bg-muted text-foreground"
+                          : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+                      )}
+                    >
+                      <ShieldIcon className="size-3.5" />
+                      IT Review Q&amp;A
                     </button>
                   </div>
                 </div>
